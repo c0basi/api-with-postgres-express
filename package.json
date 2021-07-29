@@ -23,6 +23,7 @@
     "typescript": "^4.1.3"
   },
   "devDependencies": {
+    "@types/dotenv": "^8.2.0",
     "@types/jasmine": "^3.6.3",
     "jasmine": "^3.6.4",
     "jasmine-spec-reporter": "^6.0.0",
