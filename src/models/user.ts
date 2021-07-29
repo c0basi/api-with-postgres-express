@@ -70,18 +70,20 @@ export class UserList {
         }
     }
 
-    async authenticate(username: string, password: string): Promise<User|null>{
+    async authenticate(firstname: string, lastname: string, password: string): Promise<User|null>{
         try{
             const conn = await client.connect();
-            const sql = 'SELECT user_password FROM users WHERE id=($1)';
-            const result = await conn.query(sql, [username]);
+            const sql = 'SELECT user_password FROM users WHERE firstname=($1) AND lastname=($2)';
+            const result = await conn.query(sql, [firstname, lastname]);
             console.log(password+pepper);
             if(result.rows[0]){
                 const user = result.rows[0];
                 console.log(user);
                if(bcrypt.compareSync(password+pepper, user.user_password)){
                    return user;
-               } 
+               }else{
+                   throw new Error('Incorrect Password. Please try again.')
+               }
             }
             return null;
         }catch(err){
