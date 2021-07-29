@@ -1,10 +1,19 @@
 import client from "../database";
+import bcrypt from 'bcrypt';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const pepper: string = process.env.BCRYPT_PASSWORD!
+const salt: number = parseInt(process.env.SALT_ROUNDS!)
+
+
 
 export type User = {
     id?: number,
     firstname: string,
     lastname: string,
-    password: string
+    user_password: string
 
 };
 
@@ -36,8 +45,9 @@ export class UserList {
     async create(u: User): Promise<User>{
         try{
             const conn = await client.connect();
-            const sql = 'INSERT INTO users(firstname, lastname, password) VALUES($1, $2, $3) RETURNING *';
-            const result = await conn.query(sql, [u.firstname, u.lastname, u.password]);
+            const sql = 'INSERT INTO users(firstname, lastname, user_password) VALUES($1, $2, $3) RETURNING *';
+            const hash = bcrypt.hashSync(u.user_password+pepper, salt)
+            const result = await conn.query(sql, [u.firstname, u.lastname, hash]);
             const value = result.rows[0];
             conn.release;
             return value;
@@ -57,6 +67,25 @@ export class UserList {
 
         }catch(err){
             throw new Error(`Could not delete book. ${err}`);
+        }
+    }
+
+    async authenticate(username: string, password: string): Promise<User|null>{
+        try{
+            const conn = await client.connect();
+            const sql = 'SELECT user_password FROM users WHERE id=($1)';
+            const result = await conn.query(sql, [username]);
+            console.log(password+pepper);
+            if(result.rows[0]){
+                const user = result.rows[0];
+                console.log(user);
+               if(bcrypt.compareSync(password+pepper, user.user_password)){
+                   return user;
+               } 
+            }
+            return null;
+        }catch(err){
+            throw(`Could not authenticate. Check password. ${err}`)
         }
     }
 
