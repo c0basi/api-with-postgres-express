@@ -61,7 +61,7 @@ export class UserList {
         try{
             const conn = await client.connect();
             const sql = 'DELETE FROM users WHERE id=($1)';
-            const result = await conn.query(sql);
+            const result = await conn.query(sql, [id]);
             const value = result.rows[0];
             conn.release();
             return value;
