@@ -26,7 +26,7 @@ export class UserList {
             conn.release();
             return result.rows;
         }catch(err){
-            throw new Error(`Could not retrieve users. ${err}`)
+            throw new Error(`Could not retrieve list of users. ${err}`)
         }
     }
 
@@ -35,7 +35,7 @@ export class UserList {
             const conn = await client.connect();
             const sql = 'SELECT * FROM users WHERE id=($1)';
             const result = await conn.query(sql, [id]);
-            conn.release;
+            conn.release();
             return result.rows[0];
 
         }catch(err){
@@ -49,7 +49,7 @@ export class UserList {
             const hash = bcrypt.hashSync(u.user_password+pepper, salt)
             const result = await conn.query(sql, [u.firstname, u.lastname, hash]);
             const value = result.rows[0];
-            conn.release;
+            conn.release();
             return value;
         }catch(err){
             throw new Error(`Error creating user. ${err}`);
@@ -61,27 +61,30 @@ export class UserList {
         try{
             const conn = await client.connect();
             const sql = 'DELETE FROM users WHERE id=($1)';
-            const result = await conn.query(sql);
+            const result = await conn.query(sql, [id]);
             const value = result.rows[0];
+            conn.release();
             return value;
 
         }catch(err){
-            throw new Error(`Could not delete book. ${err}`);
+            throw new Error(`Could not delete User. ${err}`);
         }
     }
 
-    async authenticate(username: string, password: string): Promise<User|null>{
+    async authenticate(firstname: string, lastname: string, password: string): Promise<User|null>{
         try{
             const conn = await client.connect();
-            const sql = 'SELECT user_password FROM users WHERE id=($1)';
-            const result = await conn.query(sql, [username]);
+            const sql = 'SELECT user_password FROM users WHERE firstname=($1) AND lastname=($2)';
+            const result = await conn.query(sql, [firstname, lastname]);
             console.log(password+pepper);
             if(result.rows[0]){
                 const user = result.rows[0];
                 console.log(user);
                if(bcrypt.compareSync(password+pepper, user.user_password)){
                    return user;
-               } 
+               }else{
+                   throw new Error('Incorrect Password. Please try again.')
+               }
             }
             return null;
         }catch(err){
